@@ -1,0 +1,16 @@
+sparql-endpoint:
+  query-url: URL of SPARQL 1.1 Query endpoint
+  update-url: URL of SPARQL 1.1 Update endpoint
+  username: Update endpoint's user name
+  password: Update endpoint's password
+task:
+  source-graph: URI of the named graph to process
+  page-size: 5000 # number of bindings to be processed at once
+  parallel-execution: false # should the SPARQL queries be executed in parallel?
+  classes: # List of absolute URIs of classes 
+    - http://some.example.class
+  properties: # Lists of absolute URIs of properties 
+    inbound:
+      - http://inbound.property
+    outbound:
+      - http://outbound.property

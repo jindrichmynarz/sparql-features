@@ -1,0 +1,46 @@
+{{!
+@param Array<IRI> classes
+@param Array<IRI> properties
+@param IRI        source-graph
+@param IRI        target-graph
+@param int        limit
+@param int        offset
+}}
+
+INSERT {
+  GRAPH <{{target-graph}}> {
+    ?s ?p ?o .
+  }
+}
+WHERE {
+  {
+    SELECT ?s
+    WHERE {
+      {
+        SELECT DISTINCT ?s
+        WHERE {
+          GRAPH <{{source-graph}}> {
+            VALUES ?class {
+              {{#classes}}
+              <{{.}}>
+              {{/classes}}
+            }
+            ?s a ?class .
+          }
+        }
+        ORDER BY ASC(?s)
+      }
+    }
+    LIMIT {{limit}}
+    OFFSET {{offset}}
+  }
+  GRAPH <{{source-graph}}> {
+    VALUES ?p {
+      {{#properties.outbound}}
+      <{{.}}>
+      {{/properties.outbound}}
+    }
+    ?s ?p ?o .
+    FILTER (isIRI(?o))
+  }
+}
