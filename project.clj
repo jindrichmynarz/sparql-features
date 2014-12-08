@@ -1,6 +1,6 @@
 (defproject sparql-features "0.1.0-SNAPSHOT"
-  :description "Constructing features with SPARQL"
-  :url "http://example.com/FIXME"
+  :description "Feature statistics with SPARQL"
+  :url "http://github.com/jindrichmynarz/sparql-features"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
