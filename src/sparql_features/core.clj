@@ -67,11 +67,10 @@
                       start-time (System/currentTimeMillis)
                       system (task/load-system config)]
                   (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (println "Shutting down...")
-                                                                         (component/stop system))))
+                                                                         (component/stop system)
+                                                                         (shutdown-agents))))
                   (println "Generating feature statistics...")
                   (task/get-feature-stats (:task system) output)
-                  ;(component/stop system)
                   (println (format "Feature statistics generation took %s seconds."
                                    (t/in-seconds (t/interval (c/from-long start-time)
-                                                             (c/from-long (System/currentTimeMillis))))))
-                  (shutdown-agents)))))
+                                                             (c/from-long (System/currentTimeMillis))))))))))

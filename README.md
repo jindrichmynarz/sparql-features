@@ -8,7 +8,7 @@ The output is serialized into a TSV file, where each line contains a feature and
 
 ## Usage
 
-The tool has a command-line interface and configuration in YAML. The feature selection is defined in the configuration file. The default configuration file can be found in `resource/config.yaml`. Start by copying this file to create your private configuration file. In the configuration, you need to describe the SPARQL endpoint you will be using. For example, for default Virtuoso installation on `localhost` use:
+The tool has a command-line interface and configuration in [YAML](http://www.yaml.org/). The feature selection is defined in the configuration file. The default configuration file can be found in [`resource/config.yaml`](https://github.com/jindrichmynarz/sparql-features/blob/master/resources/config.yaml). Start by copying this file to create your private configuration file. In the configuration, you need to describe the SPARQL endpoint you will be using. For example, for default Virtuoso installation on `localhost` use:
 
 ```yaml
 sparql-endpoint:
@@ -28,17 +28,18 @@ java -jar sparql-features.jar -h
 
 ## Compilation
 
-The tool can be compiled using Leiningen:
+The tool can be compiled using [Leiningen](http://leiningen.org/):
 
 ```bash
-git clone http://github.com/jindrichmynarz/sparql-features
+git clone https://github.com/jindrichmynarz/sparql-features.git
 cd sparql-features
 lein clean; lein uberjar
 ```
 
 ## Caveats
 
-The tool currently works only with Virtuoso due to the reliance on Virtuoso-specific stopping condition for paged SPARQL Update operations. The SPARQL 1.1 Update specification doesn't prescribe what should be in a response to an Update operation that doesn't affect any triples, so different implementations provide different responses. More details about this issue can be found [here](http://answers.semanticweb.com/questions/29420/stopping-condition-for-paged-sparql-update-operations/29422). An alternative solution is to provide an explicit count of triples that would be affected by an Update operation without paging via `LIMIT` and `OFFSET` and then stop iterating when this number is reached.
+* The tool currently works only with Virtuoso due to the reliance on Virtuoso-specific stopping condition for paged SPARQL Update operations. The SPARQL 1.1 Update specification doesn't prescribe what should be in a response to an Update operation that doesn't affect any triples, so different implementations provide different responses. More details about this issue can be found [here](http://answers.semanticweb.com/questions/29420/stopping-condition-for-paged-sparql-update-operations/29422). An alternative solution is to provide an explicit count of triples that would be affected by an Update operation without paging via `LIMIT` and `OFFSET` and then stop iterating when this number is reached.
+* When terminating the execution, the clean-up code is executed via a registered [shutdown hook](https://docs.oracle.com/javase/7/docs/api/java/lang/Runtime.html#addShutdownHook(java.lang.Thread)). However, when the execution is terminated prematurely, the shutdown code starts execution but doesn't finish. This may be due to the OS-specific waiting time before process is terminated.
 
 ## License
 
