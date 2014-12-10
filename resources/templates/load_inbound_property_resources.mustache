@@ -1,23 +1,28 @@
 {{!
-@param Array<IRI> classes
-@param Array<IRI> properties
 @param IRI        source-graph
 @param IRI        target-graph
+@param IRI        property
+@param Array<IRI> classes
+@param Boolean    virtuoso
 @param int        limit
 @param int        offset
 }}
 
+{{#virtuoso}}
+DEFINE sql:log-enable 2
+{{/virtuoso}}
+
 INSERT {
   GRAPH <{{target-graph}}> {
-    ?s ?p ?o .
+    <{{target-graph}}> <{{property}}> ?resource .
   }
 }
 WHERE {
   {
-    SELECT ?s
+    SELECT ?resource
     WHERE {
       {
-        SELECT DISTINCT ?s
+        SELECT ?resource
         WHERE {
           GRAPH <{{source-graph}}> {
             VALUES ?class {
@@ -25,22 +30,14 @@ WHERE {
               <{{.}}>
               {{/classes}}
             }
-            ?s a ?class .
+            ?resource <{{property}}> [ a ?class ] .
+            FILTER (isIRI(?resource))
           }
         }
-        ORDER BY ASC(?s)
+        ORDER BY ?resource
       }
     }
     LIMIT {{limit}}
     OFFSET {{offset}}
-  }
-  GRAPH <{{source-graph}}> {
-    VALUES ?p {
-      {{#properties.outbound}}
-      <{{.}}>
-      {{/properties.outbound}}
-    }
-    ?s ?p ?o .
-    FILTER (isIRI(?o))
   }
 }

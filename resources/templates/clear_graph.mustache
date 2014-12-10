@@ -1,5 +1,10 @@
 {{!
-@param IRI graph-uri
+@param IRI     graph-uri
+@param Boolean virtuoso
 }}
+
+{{#virtuoso}}
+DEFINE sql:log-enable 2
+{{/virtuoso}}
 
 CLEAR GRAPH <{{graph-uri}}>

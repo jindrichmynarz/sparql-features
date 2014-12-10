@@ -1,0 +1,18 @@
+{{!
+@param IRI        source-graph
+@param IRI        property
+@param Array<IRI> classes
+}}
+
+ASK
+WHERE {
+  GRAPH <{{source-graph}}> {
+    VALUES ?class {
+      {{#classes}}
+      <{{.}}>
+      {{/classes}}
+    }
+    ?s <{{property}}> [ a ?class ] .
+    FILTER (isIRI(?s))
+  }
+}

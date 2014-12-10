@@ -39,7 +39,6 @@ lein clean; lein uberjar
 ## Caveats
 
 * The tool currently works only with Virtuoso due to the reliance on Virtuoso-specific stopping condition for paged SPARQL Update operations. The SPARQL 1.1 Update specification doesn't prescribe what should be in a response to an Update operation that doesn't affect any triples, so different implementations provide different responses. More details about this issue can be found [here](http://answers.semanticweb.com/questions/29420/stopping-condition-for-paged-sparql-update-operations/29422). An alternative solution is to provide an explicit count of triples that would be affected by an Update operation without paging via `LIMIT` and `OFFSET` and then stop iterating when this number is reached.
-* When terminating the execution, the clean-up code is executed via a registered [shutdown hook](https://docs.oracle.com/javase/7/docs/api/java/lang/Runtime.html#addShutdownHook(java.lang.Thread)). However, when the execution is terminated prematurely, the shutdown code starts execution but doesn't finish. This may be due to the OS-specific waiting time before process is terminated.
 
 ## License
 

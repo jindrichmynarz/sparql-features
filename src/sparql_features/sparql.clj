@@ -10,17 +10,28 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [sparql-features.config :refer [->Config]]))
 
-(declare ask execute-sparql render-sparql)
+(declare ask execute-sparql execute-update render-sparql try-times*)
+
+; ----- Macros -----
+
+(defmacro try-times
+  "Executes @body. If an exception is thrown, will retry. At most @times retries
+  are done. If still some exception is thrown it is bubbled upwards in the call chain.
+  Adapted from <http://stackoverflow.com/a/1879961/385505>."
+  [times & body]
+  `(try-times* ~times (fn [] ~@body)))
 
 ; ----- Private functions -----
 
 (defn- execute-query
-  "Render @template-path using @data and execute the resulting SPARQL query."
-  [sparql-endpoint template-path & {:keys [data]}]
-  (execute-sparql sparql-endpoint
-                  :endpoint-url (get-in sparql-endpoint [:endpoints :query-url])
-                  :method :GET
-                  :request-string (render-sparql template-path :data data)))
+  "Render @template-path using @data and execute the resulting SPARQL query.
+  Retry @retries times."
+  [sparql-endpoint template-path & {:keys [data retries]
+                                    :or {retries 5}}]
+  (try-times retries (execute-sparql sparql-endpoint
+                                     :endpoint-url (get-in sparql-endpoint [:endpoints :query-url])
+                                     :method :GET
+                                     :request-string (render-sparql template-path :data data))))
 
 (defn- execute-sparql
   "Execute SPARQL @query-string on @endpoint-url of @sparql-endpoint using @method."
@@ -40,14 +51,6 @@
             (timbre/error body)
             (throw+)))))
 
-(defn- execute-update
-  "Render @template-path using @data and execute the resulting SPARQL update request."
-  [sparql-endpoint template-path & {:keys [data]}]
-  (execute-sparql sparql-endpoint
-                  :endpoint-url (get-in sparql-endpoint [:endpoints :update-url])
-                  :method :POST
-                  :request-string (render-sparql template-path :data data)))
-
 (defn- lazy-cat'
   "Lazily concatenates lazy sequence of sequences @colls.
   Taken from <http://stackoverflow.com/a/26595111/385505>."
@@ -66,6 +69,22 @@
   "Render SPARQL from Mustache template on @template-path using @data."
   [template-path & {:keys [data]}]
   (render-file (str "templates/" template-path ".mustache") data))
+
+(defn- try-times*
+  "Try @body for number of @times. If number of retries exceeds @times,
+  then exception is raised. Each unsuccessful try is followed by sleep,
+  which increase in length in subsequent tries."
+  [times body]
+  (loop [n times]
+    (if-let [result (try [(body)]
+                         (catch Exception ex
+                           (if (zero? n)
+                             (throw ex)
+                             (Thread/sleep (-> (- times n)
+                                               (* 20000)
+                                               (+ 10000))))))]
+      (result 0)
+      (recur (dec n)))))
 
 (defn- xml->zipper
   "Take XML string @s, parse it, and return XML zipper"
@@ -90,6 +109,15 @@
   "Delete graph @graph-uri."
   [sparql-endpoint graph-uri]
   (execute-update sparql-endpoint "clear_graph" :data {:graph-uri graph-uri}))
+
+(defn execute-update
+  "Render @template-path using @data and execute the resulting SPARQL update request."
+  [sparql-endpoint template-path & {:keys [data]}]
+  (execute-sparql sparql-endpoint
+                  :endpoint-url (get-in sparql-endpoint [:endpoints :update-url])
+                  :method :POST
+                  :request-string (render-sparql template-path
+                                                 :data (assoc data :virtuoso (:virtuoso? sparql-endpoint)))))
 
 (defn graph-exists?
   "Test if named graph @graph-uri exists in @sparql-endpoint."
@@ -132,8 +160,8 @@
   (let [message-regex (re-pattern #"(\d+)( \(or less\))? triples")
         update-fn (fn [offset] {:offset offset 
                                 :result (execute-update sparql-endpoint
-                                               template-path
-                                               :data (merge {:limit limit :offset offset} data))})
+                                                        template-path
+                                                        :data (merge {:limit limit :offset offset} data))})
         triples-changed (comp (fn [number-like]
                                 (Integer/parseInt number-like))
                               second
@@ -160,9 +188,14 @@
           new-endpoint (assoc sparql-endpoint
                               :authentication authentication
                               :endpoints {:query-url query-url
-                                          :update-url update-url})]
+                                          :update-url update-url})
+          server-header (-> query-url
+                            client/head
+                            (get-in [:headers :Server])
+                            clojure.string/lower-case)
+          virtuoso? (not= (.indexOf server-header "virtuoso") -1)]
       (assert (not-any? nil? authentication)
               "Password and username are missing from the configuration!")
       (ping-endpoint new-endpoint)
-      new-endpoint))
+      (assoc new-endpoint :virtuoso? virtuoso?)))
   (stop [sparql-endpoint] sparql-endpoint))

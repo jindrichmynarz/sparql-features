@@ -1,0 +1,32 @@
+{{!
+@param IRI source-graph
+@param IRI target-graph
+@param IRI property
+@param int limit
+@param int offset
+}}
+
+SELECT ?resource (<{{property}}> AS ?property) (COUNT(DISTINCT ?o) AS ?frequency)
+WHERE {
+  {
+    SELECT ?resource
+    WHERE {
+      {
+        SELECT DISTINCT ?resource
+        WHERE {
+          GRAPH <{{target-graph}}> {
+            [] <{{property}}> ?resource . 
+          }
+        }
+        ORDER BY ?resource
+      }
+    }
+    LIMIT {{limit}}
+    OFFSET {{offset}}
+  }
+  GRAPH <{{source-graph}}> {
+    ?resource <{{property}}> ?o .
+    FILTER (isIRI(?o))
+  }
+}
+GROUP BY ?resource

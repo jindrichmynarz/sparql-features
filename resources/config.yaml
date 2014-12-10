@@ -6,7 +6,7 @@ sparql-endpoint:
 task:
   source-graph: URI of the named graph to process
   page-size: 5000 # number of bindings to be processed at once
-  parallel-execution: false # should the SPARQL queries be executed in parallel?
+  parallel-execution: true # should the SPARQL queries be executed in parallel?
   classes: # List of absolute URIs of classes 
     - http://some.example.class
   properties: # Lists of absolute URIs of properties 
