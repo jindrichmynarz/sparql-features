@@ -4,7 +4,7 @@ A command-line tool to load feature frequencies from a SPARQL endpoint. Features
 
 For each feature, the tool retrieves the number of its occurrences. For example, if we have a feature with the `<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>` property and `<http://schema.org/Organization>` object, then the frequency would be computed as the number of distinct bindings of `?resource` in the triple pattern `?resource <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://schema.org/Organization> .`. Conversely, if we have a feature with the `<http://www.w3.org/2004/02/skos/core#related>` property and `<http://example.com/concept/1234>`, then the frequency would be computed for the triple pattern `<http://example.com/concept/1234> <http://www.w3.org/2004/02/skos/core#related> ?resource .`. 
 
-The output is serialized into a TSV file, where each line contains a feature and its frequency in the dataset in question.
+Feature extraction (`--task features`) produces a TSV file with features per single resource into the specified directory. These files are named with SHA1 hashes of resources' URIs. The output of feature statistics (`--task stats`) is serialized into a TSV file, where each line contains a feature and its frequency in the dataset in question.
 
 ## Usage
 
@@ -18,7 +18,7 @@ sparql-endpoint:
   password: dba
 ```
 
-The second part of the configuration in the `task` section is the definition of the features to be taken into account. Fill in the URI of the named graph to consider using the `source-graph` attribute. The `page-size` attribute is used to limit the number of bindings processed in 1 request to a SPARQL endpoint. If you receive time-out errors when running the tool, consider lowering the `page-size`. Via the `parallel-execution` boolean flag you can turn on parallel execution of SPARQL queries. Using the `classes` attribute provide a list of absolute URIs of classes, the instances of which should be considered. In the `properties` section, list absolute URIs of outbound and inbound properties to be considered for the class instances.
+The second part of the configuration in the `features` section is the definition of the features to be taken into account. Fill in the URI of the named graph to consider using the `source-graph` attribute. The `page-size` attribute is used to limit the number of bindings processed in 1 request to a SPARQL endpoint. If you receive time-out errors when running the tool, consider lowering the `page-size`. Via the `parallel-execution` boolean flag you can turn on parallel execution of SPARQL queries. If there's uneven load on the SPARQL endpoint and it tends to time-out queries sometimes, you can set the `retry-count` attribute to specify how many times should queries be retried. Using the `classes` attribute provide a list of absolute URIs of classes, the instances of which should be considered. In the `properties` section, list absolute URIs of outbound and inbound properties to be considered for the class instances.
 
 If you don't provide a value for some attribute, its default value from [`resources/config.yaml`](https://github.com/jindrichmynarz/sparql-features/blob/master/resources/config.yaml) will be used.
 
