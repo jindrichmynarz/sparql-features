@@ -31,22 +31,22 @@
   (let [sparql-endpoint (:sparql-endpoint task)
         source-graph (:source-graph task)
         target-graph (random-uri)]
-    (sparql/update-unlimited sparql-endpoint
+    (try (sparql/update-unlimited sparql-endpoint
                              (format "load_%sbound_property_resources" directionality)
                              :data {:classes (:classes task) 
                                     :property property
                                     :source-graph source-graph
                                     :target-graph target-graph}
                              :limit (:page-size task))
-    (doseq [result (sparql/select-unlimited sparql-endpoint
-                                            (format "%s_feature_frequencies" directionality)
-                                            :data {:property property
-                                                   :source-graph source-graph 
-                                                   :target-graph target-graph}
-                                            :limit (:page-size task)
-                                            :parallel? (:parallel-execution task))]
-      (write-frequency result directionality writer))
-    (sparql/delete-graph sparql-endpoint target-graph)))
+         (doseq [result (sparql/select-unlimited sparql-endpoint
+                                                 (format "%s_feature_frequencies" directionality)
+                                                 :data {:property property
+                                                        :source-graph source-graph 
+                                                        :target-graph target-graph}
+                                                 :limit (:page-size task)
+                                                 :parallel? (:parallel-execution task))]
+           (write-frequency result directionality writer))
+         (finally (sparql/delete-graph sparql-endpoint target-graph)))))
 
 (defn- random-uri
   "Generates a random URI"
