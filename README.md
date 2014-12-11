@@ -20,6 +20,8 @@ sparql-endpoint:
 
 The second part of the configuration in the `task` section is the definition of the features to be taken into account. Fill in the URI of the named graph to consider using the `source-graph` attribute. The `page-size` attribute is used to limit the number of bindings processed in 1 request to a SPARQL endpoint. If you receive time-out errors when running the tool, consider lowering the `page-size`. Via the `parallel-execution` boolean flag you can turn on parallel execution of SPARQL queries. Using the `classes` attribute provide a list of absolute URIs of classes, the instances of which should be considered. In the `properties` section, list absolute URIs of outbound and inbound properties to be considered for the class instances.
 
+If you don't provide a value for some attribute, its default value from [`resources/config.yaml`](https://github.com/jindrichmynarz/sparql-features/blob/master/resources/config.yaml) will be used.
+
 You can run the tool using the pre-compiled JAR file, to which you pass the configuration as a parameter. To get help about the command-line parameters of the tool, run the following:
 
 ```bash

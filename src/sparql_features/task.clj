@@ -118,8 +118,3 @@
       (doseq [property (get-in task [:properties ({"in" :inbound
                                                    "out" :outbound} directionality)])]
         (load-property-frequencies task property directionality output)))))
-
-(comment
-  (def system (load-system "sisinf-config.yaml"))
-  (get-feature-stats (:task system) "small_feature_stats.tsv")
-  )
