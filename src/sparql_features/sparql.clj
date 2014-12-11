@@ -10,7 +10,7 @@
             [slingshot.slingshot :refer [throw+ try+]]
             [sparql-features.config :refer [->Config]]))
 
-(declare ask execute-sparql execute-update render-sparql try-times*)
+(declare ask execute-query execute-sparql execute-update render-sparql try-times*)
 
 ; ----- Macros -----
 
@@ -22,16 +22,6 @@
   `(try-times* ~times (fn [] ~@body)))
 
 ; ----- Private functions -----
-
-(defn- execute-query
-  "Render @template-path using @data and execute the resulting SPARQL query.
-  Retry @retries times."
-  [sparql-endpoint template-path & {:keys [data retries]
-                                    :or {retries 5}}]
-  (try-times retries (execute-sparql sparql-endpoint
-                                     :endpoint-url (get-in sparql-endpoint [:endpoints :query-url])
-                                     :method :GET
-                                     :request-string (render-sparql template-path :data data))))
 
 (defn- execute-sparql
   "Execute SPARQL @query-string on @endpoint-url of @sparql-endpoint using @method."
@@ -110,6 +100,15 @@
   [sparql-endpoint graph-uri]
   (execute-update sparql-endpoint "clear_graph" :data {:graph-uri graph-uri}))
 
+(defn execute-query
+  "Render @template-path using @data and execute the resulting SPARQL query."
+  [sparql-endpoint template-path & {:keys [data]}]
+  (try-times (inc (:retry-count sparql-endpoint)) ; Try once, then retry for the specified number of times.
+             (execute-sparql sparql-endpoint
+                             :endpoint-url (get-in sparql-endpoint [:endpoints :query-url])
+                             :method :GET
+                             :request-string (render-sparql template-path :data data))))
+
 (defn execute-update
   "Render @template-path using @data and execute the resulting SPARQL update request."
   [sparql-endpoint template-path & {:keys [data]}]
@@ -137,14 +136,14 @@
 (defn select-unlimited
   "Lazily stream @limit-sized pages of SPARQL SELECT query
   results by executing paged query from @template-path."
-  [sparql-endpoint template-path & {:keys [data limit parallel?]
-                                    :or {limit 5000}}]
-  (let [map-fn (if parallel? pmap map)
+  [sparql-endpoint template-path & {:keys [data parallel?]}]
+  (let [page-size (get-in sparql-endpoint [:page-size :query]) 
+        map-fn (if parallel? pmap map)
         select-fn (fn [offset]
                     (select sparql-endpoint template-path :data (assoc data
-                                                                       :limit limit
+                                                                       :limit page-size
                                                                        :offset offset)))]
-    (->> (iterate (partial + limit) 0)
+    (->> (iterate (partial + page-size) 0)
          (map-fn select-fn)
          (take-while seq)
          lazy-cat')))
@@ -155,13 +154,14 @@
   ; Reason why:
   ; <http://answers.semanticweb.com/questions/29420/stopping-condition-for-paged-sparql-update-operations/29422>
   ; An alternative is to provide explicit @max-count of maximum number of bindings to update.
-  [sparql-endpoint template-path & {:keys [data limit max-count]
-                                    :or {limit 5000}}]
-  (let [message-regex (re-pattern #"(\d+)( \(or less\))? triples")
+  [sparql-endpoint template-path & {:keys [data max-count]}]
+  (let [page-size (get-in sparql-endpoint [:page-size :update])
+        message-regex (re-pattern #"(\d+)( \(or less\))? triples")
         update-fn (fn [offset] {:offset offset 
                                 :result (execute-update sparql-endpoint
                                                         template-path
-                                                        :data (merge {:limit limit :offset offset} data))})
+                                                        :data (merge {:limit page-size
+                                                                      :offset offset} data))})
         triples-changed (comp (fn [number-like]
                                 (Integer/parseInt number-like))
                               second
@@ -174,7 +174,7 @@
         continue? (if-not (nil? max-count)
                     (fn [response] (< max-count (:offset response)))
                     (fn [response] (-> response :result triples-changed zero? not)))]
-    (dorun (->> (iterate (partial + limit) 0)
+    (dorun (->> (iterate (partial + page-size) 0)
                 (map update-fn)
                 (take-while continue?)))))
 
@@ -182,18 +182,20 @@
 
 (defrecord SparqlEndpoint []
   component/Lifecycle
-  (start [{{{:keys [password query-url update-url username]} :sparql-endpoint} :config
+  (start [{{{:keys [password query-url update-url username]
+             :as sparql-config} :sparql-endpoint} :config
            :as sparql-endpoint}]
     (let [authentication [username password]
-          new-endpoint (assoc sparql-endpoint
-                              :authentication authentication
-                              :endpoints {:query-url query-url
-                                          :update-url update-url})
+          new-endpoint (merge (assoc sparql-endpoint
+                                     :authentication authentication
+                                     :endpoints {:query-url query-url
+                                                 :update-url update-url})
+                              sparql-config)
           server-header (-> query-url
                             client/head
-                            (get-in [:headers :Server])
-                            clojure.string/lower-case)
-          virtuoso? (not= (.indexOf server-header "virtuoso") -1)]
+                            (get-in [:headers :Server]))
+          virtuoso? (when-not (nil? server-header)
+                      (not= (.indexOf (clojure.string/lower-case server-header) "virtuoso") -1))]
       (assert (not-any? nil? authentication)
               "Password and username are missing from the configuration!")
       (ping-endpoint new-endpoint)

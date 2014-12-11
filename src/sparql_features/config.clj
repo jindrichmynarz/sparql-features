@@ -7,19 +7,26 @@
             [schema-contrib.core :as sc]
             [sparql-features.util :refer [exit]]))
 
+; ----- Private vars -----
+
+(def ^:private
+  positive? (s/both s/Int (s/pred pos? 'pos?)))
+
 ; ----- Public vars -----
 
 (def ConfigSchema
   {:sparql-endpoint {:query-url sc/URI
                      :update-url sc/URI
                      :username s/Str
-                     :password s/Str}
+                     :password s/Str
+                     (s/optional-key :page-size) {(s/optional-key :query) positive?
+                                                  (s/optional-key :update) positive?}
+                     (s/optional-key :parallel-execution) s/Bool
+                     (s/optional-key :retry-count) positive?}
    :task {:source-graph sc/URI
-          (s/optional-key :page-size) (s/both s/Int (s/pred pos? 'pos?))
-          (s/optional-key :parallel-execution) s/Bool
           :classes [sc/URI]
-          :properties {:inbound [sc/URI]
-                       :outbound [sc/URI]}}})
+          :properties {(s/optional-key :inbound) [sc/URI]
+                       (s/optional-key :outbound) [sc/URI]}}})
 
 ; ----- Private functions -----
 
@@ -41,6 +48,8 @@
                     (try (s/validate ConfigSchema config)
                          (catch Exception ex
                            (exit 1 (format "Invalid config: \n%s" (.getMessage ex)))))
+                    (when-not (seq (apply concat (-> config :task :properties vals)))
+                      (exit 1 "No properties speficied in the configuration file."))
                     ; Merge default config into the provided one.
                     (reduce deep-merge [default-config config])))
   (stop [config] config))

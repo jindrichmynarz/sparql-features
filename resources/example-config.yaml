@@ -3,29 +3,31 @@ sparql-endpoint:
   update-url: http://localhost:8890/sparql-auth
   username: dba
   password: dba
+  page-size:
+    query: 1000
+    update: 5000
+  parallel-execution: false
 task:
   source-graph: http://dbpedia.org
-  page-size: 5000
-  parallel-execution: false
   classes:
     - http://dbpedia.org/ontology/Band
     - http://dbpedia.org/ontology/MusicalArtist
   properties:
     inbound:
-      - http://dbpedia.org/ontology/associatedBand
-      - http://dbpedia.org/ontology/associatedMusicalArtist
-      - http://dbpedia.org/ontology/bandMember
-      - http://dbpedia.org/ontology/musicComposer
-      - http://dbpedia.org/ontology/producer
-      - http://dbpedia.org/ontology/writer
-    outbound:
       - http://dbpedia.org/ontology/artist
       - http://dbpedia.org/ontology/associatedBand
       - http://dbpedia.org/ontology/associatedMusicalArtist
       - http://dbpedia.org/ontology/bandMember
-      - http://dbpedia.org/ontology/genre
+      - http://dbpedia.org/ontology/musicComposer
       - http://dbpedia.org/ontology/musicalArtist
       - http://dbpedia.org/ontology/musicalBand
+      - http://dbpedia.org/ontology/producer
+      - http://dbpedia.org/ontology/writer
+    outbound:
+      - http://dbpedia.org/ontology/associatedBand
+      - http://dbpedia.org/ontology/associatedMusicalArtist
+      - http://dbpedia.org/ontology/bandMember
+      - http://dbpedia.org/ontology/genre
       - http://dbpedia.org/ontology/wikiPageWikiLink
       - http://dbpedia.org/ontology/subject
       - http://dbpedia.org/ontology/sameAs
