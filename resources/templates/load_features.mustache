@@ -1,0 +1,51 @@
+{{!
+@param IRI             source-graph
+@param Map<Array<IRI>> properties
+@param Array<IRI>      classes
+@param int             limit
+@param int             offset
+}}
+
+SELECT ?resource ?property ?object ?directionality
+WHERE {
+  {
+    SELECT ?resource
+    WHERE {
+      {
+        SELECT DISTINCT ?resource
+        WHERE {
+          GRAPH <{{source-graph}}> {
+            VALUES ?class {
+              {{#classes}}
+              <{{.}}>
+              {{/classes}}
+            }
+            ?resource a ?class .
+          }
+        }
+        ORDER BY ?resource
+      }
+    }
+    LIMIT {{limit}}
+    OFFSET {{offset}}
+  }
+  GRAPH <{{source-graph}}> {
+    {
+      VALUES ?property {
+        {{#properties.inbound}}
+        <{{.}}>
+        {{/properties.inbound}}
+      }
+      ?object ?property ?resource .
+      BIND ("in" AS ?directionality)
+    } UNION {
+      VALUES ?property {
+        {{#properties.outbound}}
+        <{{.}}>
+        {{/properties.outbound}}
+      }
+      ?resource ?property ?object .
+      BIND ("out" AS ?directionality)
+    }
+  }
+}

@@ -1,4 +1,5 @@
-(ns sparql-features.util)
+(ns sparql-features.util
+  (:import [java.security MessageDigest]))
 
 ; ----- Public functions -----
 
@@ -10,3 +11,10 @@
   {:pre [(#{0 1} status)]}
   (println msg)
   (System/exit status))
+
+(defn sha1
+  "Computes SHA1 hash from @string."
+  [^String string]
+  (let [digest (.digest (MessageDigest/getInstance "SHA1") (.getBytes string))]
+    ;; Stolen from <https://gist.github.com/kisom/1698245#file-sha256-clj-L19>
+    (clojure.string/join (map #(format "%02x" (bit-and % 0xff)) digest))))

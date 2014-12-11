@@ -134,11 +134,11 @@
     (map get-bindings sparql-results)))                           
 
 (defn select-unlimited
-  "Lazily stream @limit-sized pages of SPARQL SELECT query
-  results by executing paged query from @template-path."
-  [sparql-endpoint template-path & {:keys [data parallel?]}]
-  (let [page-size (get-in sparql-endpoint [:page-size :query]) 
-        map-fn (if parallel? pmap map)
+  "Lazily stream pages of SPARQL SELECT query results
+  by executing paged query from @template-path."
+  [sparql-endpoint template-path & {:keys [data]}]
+  (let [page-size (get-in sparql-endpoint [:page-size :query])
+        map-fn (if (:parallel-execution sparql-endpoint) pmap map)
         select-fn (fn [offset]
                     (select sparql-endpoint template-path :data (assoc data
                                                                        :limit page-size

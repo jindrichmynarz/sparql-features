@@ -8,7 +8,7 @@
             [clj-time.core :as t]
             [clj-time.coerce :as c]
             [sparql-features.util :refer [exit]]
-            [sparql-features.task :as task]))
+            [sparql-features.features :as features]))
 
 ; ----- Private vars -----
 
@@ -16,9 +16,12 @@
   cli-options
   [["-c" "--config CONFIG" "Path to configuration file in YAML"
     :validate [#(.exists (as-file %)) "The configuration file doesn't exist!"]]
+   ["-d" "--directory DIR" "Path to directory for outputting feature files."]
    ["-l" "--log" "Use this switch to turn on logging"]
-   ["-o" "--output TSV" "Path to the output TSV file (default: standard output)"
+   ["-o" "--output TSV" "Path to the output file for feature statistics (default: standard output)"
     :default *out*]
+   ["-t" "--task TASK" "Task to perform: either 'features' or 'stats'"
+    :validate [#(#{"features" "stats"} %) "Task can be only 'features' or 'stats'!"]]
    ["-h" "--help" "Display this help message"]])
 
 (def ^:private
@@ -58,19 +61,24 @@
 
 (defn -main
   [& args]
-  (let [{{:keys [config help log output]
+  (let [{{:keys [config directory help log output task]
           :as options} :options
          :keys [errors summary]} (parse-opts args cli-options)]
+    (when (and (= task "features") (not directory))
+      (exit 1 "Output directory needs to be provided with the -d parameter!"))
     (cond (or (empty? options) help) (exit 0 (usage summary))
           errors (exit 1 (error-msg errors))
           :else (let [_ (init-logger log)
                       start-time (System/currentTimeMillis)
-                      system (task/load-system config)]
+                      system (features/load-system config)]
                   (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (println "Shutting down...")
                                                                          (component/stop system)
                                                                          (shutdown-agents))))
-                  (println "Generating feature statistics...")
-                  (task/get-feature-stats (:task system) output)
-                  (println (format "Feature statistics generation took %s seconds."
+                  (case task
+                    "features" (do (println "Generating features...")
+                                   (features/get-features (:features system) directory)) 
+                    "stats" (do (println "Generating feature statistics...")
+                                (features/get-feature-stats (:features system) output)))
+                  (println (format "Task finished in %s seconds."
                                    (t/in-seconds (t/interval (c/from-long start-time)
                                                              (c/from-long (System/currentTimeMillis))))))))))
