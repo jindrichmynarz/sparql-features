@@ -22,7 +22,7 @@ WHERE {
     SELECT ?resource
     WHERE {
       {
-        SELECT ?resource
+        SELECT DISTINCT ?resource
         WHERE {
           GRAPH <{{source-graph}}> {
             VALUES ?class {
