@@ -23,10 +23,10 @@
                                                   (s/optional-key :update) positive?}
                      (s/optional-key :parallel-execution) s/Bool
                      (s/optional-key :retry-count) positive?}
-   :task {:source-graph sc/URI
-          :classes [sc/URI]
-          :properties {(s/optional-key :inbound) [sc/URI]
-                       (s/optional-key :outbound) [sc/URI]}}})
+   :features {:source-graph sc/URI
+              :classes [sc/URI]
+              :properties {(s/optional-key :inbound) [sc/URI]
+                           (s/optional-key :outbound) [sc/URI]}}})
 
 ; ----- Private functions -----
 
@@ -48,7 +48,7 @@
                     (try (s/validate ConfigSchema config)
                          (catch Exception ex
                            (exit 1 (format "Invalid config: \n%s" (.getMessage ex)))))
-                    (when-not (seq (apply concat (-> config :task :properties vals)))
+                    (when-not (seq (apply concat (-> config :features :properties vals)))
                       (exit 1 "No properties speficied in the configuration file."))
                     ; Merge default config into the provided one.
                     (reduce deep-merge [default-config config])))

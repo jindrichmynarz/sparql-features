@@ -7,7 +7,7 @@ sparql-endpoint:
     query: 1000
     update: 5000
   parallel-execution: false
-task:
+features:
   source-graph: http://dbpedia.org
   classes:
     - http://dbpedia.org/ontology/Band

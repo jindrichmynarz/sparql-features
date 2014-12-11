@@ -8,7 +8,7 @@ sparql-endpoint:
   parallel-execution: true # should the SPARQL queries be executed in parallel?
   password: Update endpoint's password
   retry-count: 5 # maximum number of times SPARQL queries can be retried
-task:
+features:
   source-graph: URI of the named graph to process
   classes: # List of absolute URIs of classes 
     - http://some.example.class
