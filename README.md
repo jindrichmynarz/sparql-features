@@ -28,6 +28,16 @@ You can run the tool using the pre-compiled JAR file, to which you pass the conf
 java -jar sparql-features.jar -h
 ```
 
+## Tips
+
+* For feature statistics computation on large datasets, it may be better to use multiple configuration files with different settings (page size, parallel execution) for different class-property combinations. The results can be easily concatenated, for example by using:
+
+```bash
+{ cat stats_1.tsv; tail -n+2 stats_2.tsv; } > stats.tsv
+```
+
+* Usually, it's better to set the page size to be less than 10000, because that's the default maximum response size of Virtuoso endpoints. This way you can avoid trimmed results. 
+
 ## Compilation
 
 The tool can be compiled using [Leiningen](http://leiningen.org/):
@@ -40,12 +50,10 @@ lein clean; lein uberjar
 
 ## Caveats
 
-* For feature statistics computation on large datasets, it may be better to use multiple configuration files with different settings (page size, parallel execution) for different class-property combinations.
-* Usually, it's better to set the page size to be less than 10000, because that's the default maximum response size of Virtuoso endpoints. This way you can avoid trimmed results. 
 * The tool currently works only with Virtuoso due to the reliance on Virtuoso-specific stopping condition for paged SPARQL Update operations. The SPARQL 1.1 Update specification doesn't prescribe what should be in a response to an Update operation that doesn't affect any triples, so different implementations provide different responses. More details about this issue can be found [here](http://answers.semanticweb.com/questions/29420/stopping-condition-for-paged-sparql-update-operations/29422). An alternative solution is to provide an explicit count of triples that would be affected by an Update operation without paging via `LIMIT` and `OFFSET` and then stop iterating when this number is reached.
 
 ## License
 
 Copyright © 2014 Jindřich Mynarz
 
-Distributed under the Eclipse Public License either version 1.0. 
+Distributed under the Eclipse Public License version 1.0. 
