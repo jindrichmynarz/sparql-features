@@ -22,7 +22,7 @@ The second part of the configuration in the `task` section is the definition of 
 
 If you don't provide a value for some attribute, its default value from [`resources/config.yaml`](https://github.com/jindrichmynarz/sparql-features/blob/master/resources/config.yaml) will be used.
 
-You can run the tool using the pre-compiled JAR file, to which you pass the configuration as a parameter. To get help about the command-line parameters of the tool, run the following:
+You can run the tool using the [pre-compiled JAR file](https://github.com/jindrichmynarz/sparql-features/releases/tag/v0.1), to which you pass the configuration as a parameter. To get help about the command-line parameters of the tool, run the following:
 
 ```bash
 java -jar sparql-features.jar -h
