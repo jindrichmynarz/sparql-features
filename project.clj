@@ -1,4 +1,4 @@
-(defproject sparql-features "0.1.0-SNAPSHOT"
+(defproject sparql-features "0.2.0"
   :description "Feature statistics with SPARQL"
   :url "http://github.com/jindrichmynarz/sparql-features"
   :license {:name "Eclipse Public License"
